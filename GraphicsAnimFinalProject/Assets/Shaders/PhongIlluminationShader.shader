@@ -26,6 +26,8 @@
 
 			Pass  // Main pass with ambient light
 			{
+				//Tags { "LightMode" = "ForwardBase" }
+
 				CGPROGRAM
 				#pragma vertex vertexFunc
 				#pragma fragment fragmentFunc
@@ -73,12 +75,12 @@
 					float3 normalVec = normalize(IN.normal);
 					float3 viewVec = normalize(_WorldSpaceCameraPos - IN.posWorld.xyz);
 
-					float3 lightVec = _WorldSpaceLightPos0.xyz - IN.posWorld.xyz;
+					float3 lightVec = _WorldSpaceLightPos0.xyz - IN.posWorld.xyz;  // light vec for distance calculation
 					float distance = length(lightVec);
-					float attenuation = lerp(1.0, 1.0f / distance, _WorldSpaceLightPos0.w);
+					float attenuation = lerp(1.0, 1.0f / pow(distance, 3), _WorldSpaceLightPos0.w);
 
 					//_WorldSpaceLightPos0.w is equal to 0 if directional lights and 1 if other lights
-					lightVec = _WorldSpaceLightPos0.xyz - IN.posWorld.xyz * _WorldSpaceLightPos0.w;
+					lightVec = _WorldSpaceLightPos0.xyz - IN.posWorld.xyz * _WorldSpaceLightPos0.w; // actual light vec
 
 					float3 ambientLighting = UNITY_LIGHTMODEL_AMBIENT.rgb * _Color.rgb;
 					
@@ -109,7 +111,7 @@
 				#pragma vertex vertexFunc
 				#pragma fragment fragmentFunc
 
-				#include "UnityCG.cginc" //Provides us with light data, camera information, etc
+				#include "UnityCG.cginc"
 
 				uniform float4 _LightColor0; // Light color (declared in UnityLightingCommon.cginc)
 
@@ -152,12 +154,12 @@
 					float3 normalVec = normalize(IN.normal);
 					float3 viewVec = normalize(_WorldSpaceCameraPos - IN.posWorld.xyz);
 
-					float3 lightVec = _WorldSpaceLightPos0.xyz - IN.posWorld.xyz;
+					float3 lightVec = _WorldSpaceLightPos0.xyz - IN.posWorld.xyz;  // light vec for distance calculation
 					float distance = length(lightVec);
-					float attenuation = lerp(1.0, 1.0f / distance, _WorldSpaceLightPos0.w);
+					float attenuation = lerp(1.0, 1.0f / pow(distance, 3), _WorldSpaceLightPos0.w);
 
 					//_WorldSpaceLightPos0.w is equal to 0 if directional lights and 1 if other lights
-					lightVec = _WorldSpaceLightPos0.xyz - IN.posWorld.xyz * _WorldSpaceLightPos0.w;
+					lightVec = _WorldSpaceLightPos0.xyz - IN.posWorld.xyz * _WorldSpaceLightPos0.w; // actual light vec
 
 					float3 diffuseReflection = attenuation * _LightColor0.rgb * _Color.rgb * max(0.0, dot(normalVec, lightVec));
 					
