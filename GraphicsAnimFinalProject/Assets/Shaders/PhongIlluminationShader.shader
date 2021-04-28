@@ -1,6 +1,5 @@
 ﻿Shader "MyShaders/PhongIlluminationShader"
 {
-
 	//Information sources:
 	//  1) https://www.youtube.com/watch?v=bR8DHcj6Htg
 	//  2) https://docs.unity3d.com/Manual/SL-Blend.html

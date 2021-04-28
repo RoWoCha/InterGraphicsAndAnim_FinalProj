@@ -1,5 +1,8 @@
-﻿Shader "MyShaders/SimpleTexCol"
+﻿Shader "MyShaders/TextureColorShader"
 {
+    //Information sources:
+    //  1) https://www.youtube.com/watch?v=bR8DHcj6Htg
+
     Properties
     {
         _MainTexture("Texture", 2D) = "white" {}
