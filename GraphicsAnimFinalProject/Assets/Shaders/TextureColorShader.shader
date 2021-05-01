@@ -9,49 +9,49 @@
         _Color("Colour", Color) = (1,1,1,1)
     }
 
-        SubShader
+    SubShader
+    {
+        Pass
         {
-            Pass
+            CGPROGRAM
+
+            #pragma vertex vertexFunc
+            #pragma fragment fragmentFunc
+
+            #include "UnityCG.cginc"
+
+            struct appdata
             {
-                CGPROGRAM
+                float4 vertex : POSITION;
+                float2 uv : TEXCOORD0;
+            };
 
-                #pragma vertex vertexFunc
-                #pragma fragment fragmentFunc
+            struct v2f
+            {
+                float4 position : SV_POSITION;
+                float2 uv : TEXCOORD0;
+            };
 
-                #include "UnityCG.cginc"
+            uniform fixed4 _Color;
+            uniform sampler2D _MainTexture;
 
-                struct appdata
-                {
-                    float4 vertex : POSITION;
-                    float2 uv : TEXCOORD0;
-                };
+            v2f vertexFunc(appdata IN)
+            {
+                v2f OUT;
 
-                struct v2f
-                {
-                    float4 position : SV_POSITION;
-                    float2 uv : TEXCOORD0;
-                };
+                OUT.position = UnityObjectToClipPos(IN.vertex);
+                OUT.uv = IN.uv;
 
-                fixed4 _Color;
-                sampler2D _MainTexture;
-
-                v2f vertexFunc(appdata IN)
-                {
-                    v2f OUT;
-
-                    OUT.position = UnityObjectToClipPos(IN.vertex);
-                    OUT.uv = IN.uv;
-
-                    return OUT;
-                }
-
-                fixed4 fragmentFunc(v2f IN) : SV_Target
-                {
-                    fixed4 pixelColor = tex2D(_MainTexture, IN.uv);
-
-                    return pixelColor * _Color;
-                }
-                ENDCG
+                return OUT;
             }
+
+            fixed4 fragmentFunc(v2f IN) : SV_Target
+            {
+                fixed4 pixelColor = tex2D(_MainTexture, IN.uv);
+
+                return pixelColor * _Color;
+            }
+            ENDCG
         }
+    }
 }

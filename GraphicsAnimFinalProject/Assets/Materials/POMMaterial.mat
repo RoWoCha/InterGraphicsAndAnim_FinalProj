@@ -74,10 +74,13 @@ Material:
     - _Metallic: 0.329
     - _Mode: 0
     - _OcclusionStrength: 1
-    - _Parallax: 0.194
+    - _Parallax: 0.211
     - _ParallaxMaxSamples: 37.1
     - _ParallaxMinSamples: 37.1
     - _ParallaxSamples: 100
+    - _ParallaxSamplesMax: 41.3
+    - _ParallaxSamplesMin: 11.1
+    - _Shininess: 0.07
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1

@@ -1,133 +1,170 @@
-Shader "Custom/ParallaxOcclusionMapping"
+Shader "MyShaders/ParallaxOcclusionMappingWithPhong"
 {
 	// Informations sources:
-	// 1) https://www.youtube.com/watch?v=CpRuYJHGL10
-	// 2) https://catlikecoding.com/unity/tutorials/rendering/part-20/
-	// 3) https://github.com/hamish-milne/POMUnity
+	// 1) https://habr.com/ru/post/416163/
+	// 2) https://github.com/RoWoCha/SP21-GPR-300-01/blob/project4_egor/animal3D%20SDK/resource/glsl/4x/fs/03-lod/drawPhongPOM_fs4x.glsl
+	// 2) https://www.gamedev.net/articles/programming/graphics/a-closer-look-at-parallax-occlusion-mapping-r3262/
+	// 3) https://catlikecoding.com/unity/tutorials/rendering/part-20/
+	// 4) https://github.com/hamish-milne/POMUnity
+	// 5) https://www.youtube.com/watch?v=CpRuYJHGL10
+	// 6) https://docs.unity3d.com/ScriptReference/Mesh-tangents.html
+	// 7) https://stackoverflow.com/questions/24166446/glsl-tessellation-displacement-mapping
+
 
 	Properties
 	{
-			_MainTexture("Diffuse map (RGB)", 2D) = "white" {}
-			_HeightMap("Height map (R)", 2D) = "white" {}
-			_Parallax("Height scale", Range(0.005, 0.1)) = 0.08
-			_ParallaxSamples("Parallax samples", Range(10, 100)) = 40
+			_MainTexture("Albido texture", 2D) = "white" {}
+			_HeightMap("Height map texture", 2D) = "white" {}
+			_Parallax("Height scale", Range(0, 1)) = 0.05
+			_ParallaxSamplesMin("Parallax samples minimum", Range(5, 200)) = 5
+			_ParallaxSamplesMax("Parallax samples maximum", Range(5, 200)) = 50
+			_Shininess("Shininess", Float) = 0.1									// Level of shininess from reflection
+
 	}
-		SubShader
+
+	SubShader
+	{
+		Pass
+		{
+			Tags {"RenderType" = "Opaque"}
+
+			CGPROGRAM
+			#pragma vertex vertexFunc
+			#pragma fragment fragmentFunc
+
+			#include "UnityCG.cginc"
+
+			uniform float4 _LightColor0; // Light color (declared in UnityLightingCommon.cginc)
+
+			uniform sampler2D _MainTexture; // Object's texture
+			uniform float4 _MainTexture_ST; // Offset and tiling values of texture (for texture scale and offset), setup by Unity
+
+			uniform sampler2D _HeightMap;
+
+			uniform float _Parallax;
+			uniform float _ParallaxSamplesMin;
+			uniform float _ParallaxSamplesMax;
+
+			uniform float _Shininess;
+
+			struct appdata
 			{
-				Pass
-				{
-					Tags { "LightMode" = "ForwardBase" }
+				float4 vertexPos: POSITION;
+				float2 uv: TEXCOORD0;
+				float3 normal: NORMAL;
+				float4 tangent  : TANGENT;
+			};
 
-					CGPROGRAM
-					#pragma vertex vertexFunc
-					#pragma fragment fragmentFunc
+			struct v2f
+			{
+				float4 position: POSITION;
+				float2 uv: TEXCOORD0;
+				float4 posWorld: TEXCOORD1;
+				//float3x3 TBN: ...;				// doesn't work:(
+				float3 normalWorld : TEXCOORD2;
+				float3 tangentWorld : TEXCOORD3;
+				float3 bitangentWorld : TEXCOORD4;
+				float3 normal  : NORMAL;
+			};
 
-					sampler2D _MainTexture;
-					sampler2D _HeightMap;
-					float _Parallax;
-					float _ParallaxSamples;
-					uniform float4 _LightColor0;
+			v2f vertexFunc(appdata IN)
+			{
+				v2f OUT;
 
-					struct appdata
-					{
-						float4 vertex: POSITION;
-						float3 normal: NORMAL;
-						float2 texcoord: TEXCOORD0;
-						float4 tangent  : TANGENT;
-					};
+				OUT.posWorld = mul(unity_ObjectToWorld, IN.vertexPos);
 
-					struct v2f
-					{
-						float4 pos: SV_POSITION;
-						float2 tex: TEXCOORD0;
-						float4 posWorld: TEXCOORD1;
-						float3 tSpace0 : TEXCOORD2;
-						float3 tSpace1 : TEXCOORD3;
-						float3 tSpace2 : TEXCOORD4;
-						float3 normal  : TEXCOORD5;
-					};
+				// Tangent Basis Values
+				OUT.tangentWorld = normalize(mul(unity_ObjectToWorld, IN.tangent.xyz));
+				OUT.normalWorld = mul(IN.normal.xyz, unity_WorldToObject);
+				OUT.bitangentWorld = cross(OUT.normalWorld, OUT.tangentWorld) * IN.tangent.w;
 
-					v2f vertexFunc(appdata IN)
-					{
-						v2f OUT;
+				//OUT.TBN = float3x3(worldNormal, worldTangent, worldBitangent);
 
-						OUT.posWorld = mul(unity_ObjectToWorld, IN.vertex);
+				OUT.position = UnityObjectToClipPos(IN.vertexPos);
+				OUT.uv = IN.uv;
+				OUT.normal = IN.normal;
 
-						fixed3 worldNormal = mul(IN.normal.xyz, (float3x3)unity_WorldToObject);
-						fixed3 worldTangent = normalize(mul((float3x3)unity_ObjectToWorld,IN.tangent.xyz));
-						fixed3 worldBitangent = cross(worldNormal, worldTangent) * IN.tangent.w;
-
-						OUT.tSpace0 = float3(worldTangent.x, worldBitangent.x, worldNormal.x);
-						OUT.tSpace1 = float3(worldTangent.y, worldBitangent.y, worldNormal.y);
-						OUT.tSpace2 = float3(worldTangent.z, worldBitangent.z, worldNormal.z);
-
-						OUT.pos = UnityObjectToClipPos(IN.vertex);
-						OUT.tex = IN.texcoord;
-						OUT.normal = IN.normal;
-
-						return OUT;
-					}
-
-					float4 fragmentFunc(v2f IN) : SV_TARGET
-					{
-						float3 normalDirection = normalize(IN.normal);
-						fixed3 worldViewDir = normalize(_WorldSpaceCameraPos.xyz - IN.posWorld.xyz);
-						fixed3 viewDir = IN.tSpace0.xyz * worldViewDir.x + IN.tSpace1.xyz * worldViewDir.y + IN.tSpace2.xyz * worldViewDir.z;
-						float2 vParallaxDirection = normalize(viewDir.xy);
-						float fLength = length(viewDir);
-						float fParallaxLength = sqrt(fLength * fLength - viewDir.z * viewDir.z) / viewDir.z;
-						float2 vParallaxOffsetTS = vParallaxDirection * fParallaxLength * _Parallax;
-						float nMinSamples = 6;
-						float nMaxSamples = min(_ParallaxSamples, 100);
-						int nNumSamples = (int)(lerp(nMinSamples, nMaxSamples, 1 - dot(worldViewDir , IN.normal)));
-						float fStepSize = 1.0 / (float)nNumSamples;
-						int    nStepIndex = 0;
-						float fCurrHeight = 0.0;
-						float fPrevHeight = 1.0;
-						float2 vTexOffsetPerStep = fStepSize * vParallaxOffsetTS;
-						float2 vTexCurrentOffset = IN.tex.xy;
-						float  fCurrentBound = 1.0;
-						float  fParallaxAmount = 0.0;
-						float2 pt1 = 0;
-						float2 pt2 = 0;
-						float2 dx = ddx(IN.tex.xy);
-						float2 dy = ddy(IN.tex.xy);
-						for (nStepIndex = 0; nStepIndex < nNumSamples; nStepIndex++)
-						{
-							vTexCurrentOffset -= vTexOffsetPerStep;
-							fCurrHeight = tex2D(_HeightMap, vTexCurrentOffset,dx,dy).r;
-							fCurrentBound -= fStepSize;
-							if (fCurrHeight > fCurrentBound)
-							{
-								pt1 = float2(fCurrentBound, fCurrHeight);
-								pt2 = float2(fCurrentBound + fStepSize, fPrevHeight);
-								nStepIndex = nNumSamples + 1;   //Exit loop
-								fPrevHeight = fCurrHeight;
-							}
-							else
-							{
-								fPrevHeight = fCurrHeight;
-							}
-						}
-						float fDelta2 = pt2.x - pt2.y;
-						float fDelta1 = pt1.x - pt1.y;
-						float fDenominator = fDelta2 - fDelta1;
-						if (fDenominator == 0.0f)
-						{
-							fParallaxAmount = 0.0f;
-						}
-						else
-						{
-							fParallaxAmount = (pt1.x * fDelta2 - pt2.x * fDelta1) / fDenominator;
-						}
-						IN.tex.xy -= vParallaxOffsetTS * (1 - fParallaxAmount);
-						float3 lightDirection = normalize(_WorldSpaceLightPos0.xyz);
-						float3 diffuseReflection = _LightColor0.rgb * saturate(dot(normalDirection, lightDirection));
-						float3 color = diffuseReflection + UNITY_LIGHTMODEL_AMBIENT.rgb;
-						float4 tex = tex2D(_MainTexture, IN.tex.xy);
-						return float4(tex.xyz * color , 1.0);
-					}
-					ENDCG
-				}
+				return OUT;
 			}
+
+			float4 fragmentFunc(v2f IN) : SV_TARGET
+			{
+				float3 normal = normalize(IN.normal);
+				float3 viewWorld = normalize(_WorldSpaceCameraPos - IN.posWorld.xyz);
+
+				float3x3 TBN = float3x3(IN.tangentWorld, IN.bitangentWorld, IN.normalWorld);
+
+				// Getting view vector in tangent space
+				float3 viewVec_tan = mul(TBN, viewWorld);
+
+				/*float3 viewVec_tan = float3(IN.tangentWorld.x, IN.bitangentWorld.x, IN.normalWorld.x) * viewWorld.x +
+								     float3(IN.tangentWorld.y, IN.bitangentWorld.y, IN.normalWorld.y) * viewWorld.y +
+								     float3(IN.tangentWorld.z, IN.bitangentWorld.z, IN.normalWorld.z) * viewWorld.z;*/
+				
+				/*fixed3 viewVec_tan = float3(IN.tangentWorld.x, IN.bitangentWorld.x, IN.normalWorld.x) * IN.viewWorld.x +
+							    	 float3(IN.tangentWorld.y, IN.bitangentWorld.y, IN.normalWorld.y) * IN.viewWorld.y +
+							    	 float3(IN.tangentWorld.z, IN.bitangentWorld.z, IN.normalWorld.z) * IN.viewWorld.z;*/
+
+				float parallaxLimit = length(viewVec_tan.xy) / viewVec_tan.z;
+				float2 offsetDirection = normalize(viewVec_tan.xy);
+				float2 parallaxOffsetMax = offsetDirection * parallaxLimit * _Parallax;
+
+				int numOfSteps = (lerp(min(_ParallaxSamplesMin, _ParallaxSamplesMax - 1), _ParallaxSamplesMax, abs(dot(float3(0, 0, 1), viewVec_tan))));
+				float stepDepth = 1.0 / (float)numOfSteps;
+				float2 parallaxOffsetPerStep = stepDepth * parallaxOffsetMax;
+
+				float currentDepth = 1.0;
+				float2 dx = ddx(IN.uv.xy);
+				float2 dy = ddy(IN.uv.xy);
+				float2 currentUV = IN.uv.xy;
+
+				float currentHeightMapValue = tex2D(_HeightMap, currentUV).r;
+
+				// Do until height value from height map is more than depth value (while searching for point's actual height)
+				while (currentDepth > currentHeightMapValue)
+				{
+					// shift texture coordinate towards camera
+					currentUV -= parallaxOffsetPerStep;
+					// update depth map value using new texture coordinate
+					currentHeightMapValue = tex2D(_HeightMap, currentUV, dx, dy).r;
+					// get depth of next step
+					currentDepth -= stepDepth;
+				}
+
+				// texture coordinates before intersection (step back)
+				float2 prevUV = currentUV + parallaxOffsetPerStep;
+
+				// get values difference after and before intersection
+				float afterDepth = currentHeightMapValue - currentDepth;
+				float beforeDepth = tex2D(_HeightMap, prevUV).r - currentDepth + stepDepth;
+
+				// interpolation of texture coordinates
+				float t = afterDepth / (afterDepth - beforeDepth);
+				float2 finalUV_POM = lerp(currentUV, prevUV, t); // final texcord for POM
+
+				// Phong calculations
+				float3 lightVec = _WorldSpaceLightPos0.xyz - IN.posWorld.xyz * _WorldSpaceLightPos0.w;
+				float distance = length(lightVec);
+
+				float3 reflectionVec = reflect(-lightVec, normal);
+
+				//_WorldSpaceLightPos0.w is equal to 0 if directional lights and 1 if other lights
+				float attenuation = lerp(1.0, 1.0f / pow(distance, 3), _WorldSpaceLightPos0.w);
+
+				float3 diffuseColor = max(0.0, dot(normal, lightVec)) * attenuation;
+				float3 specularColor;
+				if (dot(IN.normal, lightVec) >= 0.0) // if light is coming from opposite direction
+					specularColor = attenuation * pow(max(0.0, dot(reflectionVec, viewWorld)), 1.0f / _Shininess);
+				else
+					specularColor = float3(0.0, 0.0, 0.0);
+
+				float3 ambientColor = UNITY_LIGHTMODEL_AMBIENT.rgb;
+
+				float4 finColor = float4(((ambientColor + diffuseColor) * tex2D(_MainTexture, finalUV_POM) + specularColor) * _LightColor0.rgb, 1.0);
+
+				return finColor;
+			}
+			ENDCG
+		}
+	}
 }
