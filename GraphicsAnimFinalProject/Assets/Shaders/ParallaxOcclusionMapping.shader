@@ -1,16 +1,19 @@
+/// Script: ParallaxOcclusionMapping.shader
+/// Brief: Parallax Occlusion Mapping With Phong shader for single light
+/// Author: Egor Fesenko
+/// Date: 05/01/2021
+/// Sources:
+///  1) https://habr.com/ru/post/416163/
+///  2) https://github.com/RoWoCha/SP21-GPR-300-01/blob/project4_egor/animal3D%20SDK/resource/gl
+///  2) https://www.gamedev.net/articles/programming/graphics/a-closer-look-at-parallax-occlusio
+///  3) https://catlikecoding.com/unity/tutorials/rendering/part-20/
+///  4) https://github.com/hamish-milne/POMUnity
+///  5) https://www.youtube.com/watch?v=CpRuYJHGL10ml
+///  6) https://docs.unity3d.com/ScriptReference/Mesh-tangents.html
+///  7) https://stackoverflow.com/questions/24166446/glsl-tessellation-displacement-mapping
+
 Shader "MyShaders/ParallaxOcclusionMappingWithPhong"
 {
-	// Informations sources:
-	// 1) https://habr.com/ru/post/416163/
-	// 2) https://github.com/RoWoCha/SP21-GPR-300-01/blob/project4_egor/animal3D%20SDK/resource/glsl/4x/fs/03-lod/drawPhongPOM_fs4x.glsl
-	// 2) https://www.gamedev.net/articles/programming/graphics/a-closer-look-at-parallax-occlusion-mapping-r3262/
-	// 3) https://catlikecoding.com/unity/tutorials/rendering/part-20/
-	// 4) https://github.com/hamish-milne/POMUnity
-	// 5) https://www.youtube.com/watch?v=CpRuYJHGL10
-	// 6) https://docs.unity3d.com/ScriptReference/Mesh-tangents.html
-	// 7) https://stackoverflow.com/questions/24166446/glsl-tessellation-displacement-mapping
-
-
 	Properties
 	{
 			_MainTexture("Albido texture", 2D) = "white" {}
@@ -97,13 +100,13 @@ Shader "MyShaders/ParallaxOcclusionMappingWithPhong"
 				// Getting view vector in tangent space
 				float3 viewVec_tan = mul(TBN, viewWorld);
 
-				/*float3 viewVec_tan = float3(IN.tangentWorld.x, IN.bitangentWorld.x, IN.normalWorld.x) * viewWorld.x +
-								     float3(IN.tangentWorld.y, IN.bitangentWorld.y, IN.normalWorld.y) * viewWorld.y +
-								     float3(IN.tangentWorld.z, IN.bitangentWorld.z, IN.normalWorld.z) * viewWorld.z;*/
+				//float3 viewVec_tan = float3(IN.tangentWorld.x, IN.bitangentWorld.x, IN.normalWorld.x) * viewWorld.x +
+				//				     float3(IN.tangentWorld.y, IN.bitangentWorld.y, IN.normalWorld.y) * viewWorld.y +
+				//				     float3(IN.tangentWorld.z, IN.bitangentWorld.z, IN.normalWorld.z) * viewWorld.z;
 				
-				/*fixed3 viewVec_tan = float3(IN.tangentWorld.x, IN.bitangentWorld.x, IN.normalWorld.x) * IN.viewWorld.x +
-							    	 float3(IN.tangentWorld.y, IN.bitangentWorld.y, IN.normalWorld.y) * IN.viewWorld.y +
-							    	 float3(IN.tangentWorld.z, IN.bitangentWorld.z, IN.normalWorld.z) * IN.viewWorld.z;*/
+				//fixed3 viewVec_tan = float3(IN.tangentWorld.x, IN.bitangentWorld.x, IN.normalWorld.x) * IN.viewWorld.x +
+				//			    	 float3(IN.tangentWorld.y, IN.bitangentWorld.y, IN.normalWorld.y) * IN.viewWorld.y +
+				//			    	 float3(IN.tangentWorld.z, IN.bitangentWorld.z, IN.normalWorld.z) * IN.viewWorld.z;
 
 				float parallaxLimit = length(viewVec_tan.xy) / viewVec_tan.z;
 				float2 offsetDirection = normalize(viewVec_tan.xy);
@@ -167,4 +170,5 @@ Shader "MyShaders/ParallaxOcclusionMappingWithPhong"
 			ENDCG
 		}
 	}
+	Fallback "Diffuse"
 }

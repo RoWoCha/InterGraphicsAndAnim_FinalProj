@@ -1,4 +1,9 @@
-﻿using System.Collections;
+﻿/// Script: AutoRotation.cs
+/// Brief: Rotates attached GameObject
+/// Author: Egor Fesenko
+/// Date: 04/28/2021
+
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 

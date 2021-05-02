@@ -1,4 +1,9 @@
-﻿// Source: https://forum.unity.com/threads/fly-cam-simple-cam-script.67042/
+﻿/// Script: FlyCamScript.cs
+/// Brief: Controller for the camera
+/// Author: Egor Fesenko
+/// Date: 12/01/2020
+/// Sources:
+/// 1) https://forum.unity.com/threads/fly-cam-simple-cam-script.67042/
 
 using UnityEngine;
 public class FlyCamScript : MonoBehaviour

@@ -1,15 +1,19 @@
-﻿Shader "MyShaders/PhongIlluminationShader"
-{
-	//Information sources:
-	//  1) https://www.youtube.com/watch?v=bR8DHcj6Htg
-	//  2) https://docs.unity3d.com/Manual/SL-Blend.html
-	//  3) https://docs.unity3d.com/Manual/SL-PassTags.html
-	//  4) https://janhalozan.com/2017/08/12/phong-shader/
-	//  5) https://forum.unity.com/threads/what-is-_maintex_st.24962/
-	//  6) https://docs.unity3d.com/Manual/SL-UnityShaderVariables.html
-	//  7) https://docs.unity3d.com/Manual/SL-BuiltinFunctions.html
-	//  8) https://docs.unity3d.com/Manual/SL-ShaderSemantics.html
+﻿/// Script: PhongIlluminationShader.shader
+/// Brief: Phong illuminations shader for multiple lights
+/// Author: Egor Fesenko
+/// Date: 04/28/2021
+/// Sources:
+///  1) https://www.youtube.com/watch?v=bR8DHcj6Htg
+///  2) https://docs.unity3d.com/Manual/SL-Blend.html
+///  3) https://docs.unity3d.com/Manual/SL-PassTags.html
+///  4) https://janhalozan.com/2017/08/12/phong-shader/
+///  5) https://forum.unity.com/threads/what-is-_maintex_st.24962/
+///  6) https://docs.unity3d.com/Manual/SL-UnityShaderVariables.html
+///  7) https://docs.unity3d.com/Manual/SL-BuiltinFunctions.html
+///  8) https://docs.unity3d.com/Manual/SL-ShaderSemantics.html
 
+Shader "MyShaders/PhongIlluminationShader"
+{
 	Properties
 	{
 		_MainTexture("Texture", 2D) = "white" {}		  // Object's texture
@@ -66,7 +70,7 @@
 				v2f OUT;
 
 				OUT.posWorld = mul(unity_ObjectToWorld, IN.vertexPos);  //Current model matrix multiplied by vertex position
-				OUT.normal = IN.normal;
+				OUT.normal = normalize(mul(IN.normal, unity_WorldToObject));
 				OUT.position = UnityObjectToClipPos(IN.vertexPos); // Screen position of vertex, function used in Unity instead of multiplying by MVP matrix
 				
 				// TRANSFORM_TEX macro from UnityCG.cginc to make sure texture scale and offset are applied correctly
@@ -77,7 +81,7 @@
 			}
 
 			//SV_Target because output is fixed4 
-			fragOutput fragmentFunc(v2f IN) : SV_Target
+			fragOutput fragmentFunc(v2f IN)
 			{
 				float3 lightVec = _WorldSpaceLightPos0.xyz - IN.posWorld.xyz * _WorldSpaceLightPos0.w;
 				float distance = length(lightVec);
@@ -153,7 +157,7 @@
 				v2f OUT;
 
 				OUT.posWorld = mul(unity_ObjectToWorld, IN.vertexPos);  //Current model matrix multiplied by vertex position
-				OUT.normal = IN.normal;
+				OUT.normal = normalize(mul(IN.normal, unity_WorldToObject));
 				OUT.position = UnityObjectToClipPos(IN.vertexPos); // Screen position of vertex, function used in Unity instead of multiplying by MVP matrix
 				
 				// TRANSFORM_TEX macro from UnityCG.cginc to make sure texture scale and offset are applied correctly
@@ -192,4 +196,5 @@
 			ENDCG
 		}
 	}
+	Fallback "Diffuse"
 }

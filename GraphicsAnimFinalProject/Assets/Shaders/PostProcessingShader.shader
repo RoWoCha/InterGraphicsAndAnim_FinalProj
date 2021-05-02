@@ -1,4 +1,11 @@
-﻿Shader "Hidden/PostProcessingShader"
+﻿/// Shader: PostProcessingShader.shader
+/// Brief: Takes input of camera texture and outputs it to the screen (yeah, that's it haha, but you can uncomment line 53 to invert colours)
+/// Author: Egor Fesenko
+/// Date: 04/28/2021
+/// Sources:
+/// 1) https://www.youtube.com/watch?v=IRbWGI4Rqeo
+
+Shader "Hidden/PostProcessingShader"
 {
     Properties
     {

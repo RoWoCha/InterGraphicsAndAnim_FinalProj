@@ -1,7 +1,12 @@
-﻿Shader "MyShaders/TextureColorShader"
+﻿/// Script: TextureColorShader.shader
+/// Brief: Allows to attach a texture to the material and change its color
+/// Author: Egor Fesenko
+/// Date: 04/28/2021
+/// Sources:
+/// 1) https://www.youtube.com/watch?v=bR8DHcj6Htg
+
+Shader "MyShaders/TextureColorShader"
 {
-    //Information sources:
-    //  1) https://www.youtube.com/watch?v=bR8DHcj6Htg
 
     Properties
     {
