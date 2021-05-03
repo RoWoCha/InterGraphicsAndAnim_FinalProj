@@ -16,6 +16,11 @@ Shaders Implemented:
 - Depth of Field post-processing shader
 
 Run instruction: Open the project in Unity, press Run.
+Controls:
+- WASD as standard
+- E/Q to move up and down
+- Mouse wheel up/down to change camera movement speed
+- Hold Shift to move with max speed
 
 How to adjust values:
 - Phong with multiple lights
